@@ -16,7 +16,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -32,6 +31,7 @@ import java.io.PrintStream;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
+
     int count=0;
     Button crash1=null;
     Button crash2=null;
@@ -41,13 +41,9 @@ public class MainActivity extends AppCompatActivity
     public void onClick(View v) {
         int id=v.getId();
         if(id==R.id.crash1){
-            count++;
-            updateScore(count);
-            throw new RuntimeException("crash");
+            crash();
         }else if(id==R.id.crash2){
-            count++;
-            updateScore(count);
-            throw new RuntimeException("crash");
+            crash();
         }
     }
 
@@ -249,5 +245,11 @@ public class MainActivity extends AppCompatActivity
             return true;
         }
         return false;
+    }
+
+    public void crash(){
+        count++;
+        updateScore(count);
+        throw new RuntimeException("crash");
     }
 }
