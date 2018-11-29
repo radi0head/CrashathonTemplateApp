@@ -216,7 +216,7 @@ public class MainActivity extends AppCompatActivity
             //Read File Line By Line
             while ((strLine = br.readLine()) != null) {
                 Log.w("FileUtils", "File data: " + strLine);
-                score=Integer.parseInt(""+strLine.charAt(0));
+                score=Integer.parseInt(""+strLine);
             }
             in.close();
         }
