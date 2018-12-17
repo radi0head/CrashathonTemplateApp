@@ -1,7 +1,11 @@
 package com.example.user.crashathontemplateapp;
 
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -16,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.DataInputStream;
@@ -33,17 +38,50 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
     int count=0;
+    int countCamera=0;
+    int crash1Count=0;
+    int crash2Count=0;
     Button crash1=null;
     Button crash2=null;
     TextView scoreTextView=null;
+    SharedPreferences sharedPref;
 
     @Override
     public void onClick(View v) {
         int id=v.getId();
         if(id==R.id.crash1){
-            crash();
+            Button button=(Button) v;
+            if(crash1Count==0){
+                button.setText(getString(R.string.no_crash));
+                crash1Count++;
+            }else{
+                button.setText(getString(R.string.crash));
+                crash1Count--;
+            }
         }else if(id==R.id.crash2){
-            crash();
+            Button button=(Button) v;
+            if(crash2Count==0){
+                button.setText(getString(R.string.no_crash));
+                crash2Count++;
+            }else{
+                button.setText(getString(R.string.crash));
+                crash2Count--;
+            }
+        }else if(id==R.id.score_text){
+            //We begin by checking if the feature has been locked previously
+            sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+            String isLocked=sharedPref.getString(getString(R.string.score_text_lock),"false");
+            if(isLocked.equals("true")){
+                Snackbar.make(v, "You've already used this feature", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }else{
+                //First, lock the feature so that it can't be used more than once
+                SharedPreferences.Editor editor=sharedPref.edit();
+                editor.putString(getString(R.string.score_text_lock), "true");
+                editor.apply();
+                //Then, we crash the app
+                crash();
+            }
         }
     }
 
@@ -58,10 +96,18 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                countCamera++;
+                Snackbar.make(view, "Try selecting the Import option now", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
+
+        //Get a handle to a sharedpref object
+        sharedPref=this.getSharedPreferences(
+                getString(R.string.feature_lock),
+                Context.MODE_PRIVATE
+        );
+
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -96,10 +142,11 @@ public class MainActivity extends AppCompatActivity
         }
 
         scoreTextView=(TextView)findViewById(R.id.score_text);
-        scoreTextView.setText(""+count);
+        scoreTextView.setOnClickListener(this);
+        scoreTextView.setText("Score: "+count);
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setNavigationItemSelectedListener(MainActivity.this);
     }
 
     @Override
@@ -128,6 +175,18 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+            String isLocked=sharedPref.getString(getString(R.string.menu_item_lock),"false");
+            if(isLocked.equals("true")){
+                Toast.makeText(this, "You've already used this feature", Toast.LENGTH_SHORT).show();
+            }else{
+                //First, lock the feature so that it can't be used more than once
+                SharedPreferences.Editor editor=sharedPref.edit();
+                editor.putString(getString(R.string.menu_item_lock), "true");
+                editor.apply();
+                //Then, we crash the app
+                crash();
+            }
             return true;
         }
 
@@ -141,7 +200,23 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_camera) {
-            // Handle the camera action
+            if(countCamera==0){
+                Intent cameraIntent=new Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA);
+                startActivity(cameraIntent);
+            }else{
+                sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+                String isLocked=sharedPref.getString(getString(R.string.camera_lock),"false");
+                if(isLocked.equals("true")){
+                    Toast.makeText(this, "You've already used this feature", Toast.LENGTH_SHORT).show();
+                }else{
+                    //First, lock the feature so that it can't be used more than once
+                    SharedPreferences.Editor editor=sharedPref.edit();
+                    editor.putString(getString(R.string.camera_lock), "true");
+                    editor.apply();
+                    //Then, we crash the app
+                    crash();
+                }
+            }
         } else if (id == R.id.nav_gallery) {
 
         } else if (id == R.id.nav_slideshow) {
@@ -251,5 +326,21 @@ public class MainActivity extends AppCompatActivity
         count++;
         updateScore(count);
         throw new RuntimeException("crash");
+    }
+
+    public void onLogoClick(View v){
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+        String isLocked=sharedPref.getString(getString(R.string.logo_lock),"false");
+        if(isLocked.equals("true")){
+            Snackbar.make(v, "You've already used this feature", Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show();
+        }else{
+            //First, lock the feature so that it can't be used more than once
+            SharedPreferences.Editor editor=sharedPref.edit();
+            editor.putString(getString(R.string.logo_lock), "true");
+            editor.apply();
+            //Then, we crash the app
+            crash();
+        }
     }
 }
