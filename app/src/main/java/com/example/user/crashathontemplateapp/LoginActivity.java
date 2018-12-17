@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -20,9 +21,12 @@ import java.io.PrintStream;
 public class LoginActivity extends AppCompatActivity {
 
     EditText nameField=null;
+    EditText passwordField=null;
+    String passwordByUser=null;
     Button proceed=null;
     String userInfo=null;
     SharedPreferences sharedPref=null;
+    String password="ccisthebest";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,17 +44,23 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         }
 
-        nameField=(EditText)findViewById(R.id.name_field);
-        userInfo=nameField.getText().toString();
-
         proceed=(Button)findViewById(R.id.enter_game_button);
 
         proceed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                writeName(userInfo);
-                Intent intent=new Intent(LoginActivity.this, MainActivity.class);
-                startActivity(intent);
+                nameField=(EditText)findViewById(R.id.name_field);
+                userInfo=nameField.getText().toString();
+
+                passwordField=(EditText)findViewById(R.id.password_field);
+                passwordByUser=passwordField.getText().toString();
+                if(passwordByUser.equals(password)){
+                    writeName(userInfo);
+                    Intent intent=new Intent(LoginActivity.this, MainActivity.class);
+                    startActivity(intent);
+                }else{
+                    Toast.makeText(LoginActivity.this, "Please enter the correct password", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
@@ -69,7 +79,7 @@ public class LoginActivity extends AppCompatActivity {
             OutputStream os = new FileOutputStream(file);
             // Connect print stream to the output stream
             p = new PrintStream(os);
-            p.println(""+name);
+            p.println(name);
             Log.w("FileUtils", "Writing file" + file);
         } catch (IOException e) {
             Log.w("FileUtils", "Error writing " + file, e);
