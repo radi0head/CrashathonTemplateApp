@@ -1,6 +1,8 @@
 package com.example.user.crashathontemplateapp;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -20,11 +22,23 @@ public class LoginActivity extends AppCompatActivity {
     EditText nameField=null;
     Button proceed=null;
     String userInfo=null;
+    SharedPreferences sharedPref=null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+        String isLoggedIn=sharedPref.getString(getString(R.string.log_in_key),"false");
+        if(isLoggedIn.equals("false")){
+            SharedPreferences.Editor editor=sharedPref.edit();
+            editor.putString(getString(R.string.log_in_key),"true");
+            editor.apply();
+        }else if(isLoggedIn.equals("true")){
+            Intent intent=new Intent(this, MainActivity.class);
+            startActivity(intent);
+        }
 
         nameField=(EditText)findViewById(R.id.name_field);
         userInfo=nameField.getText().toString();
@@ -84,5 +98,9 @@ public class LoginActivity extends AppCompatActivity {
             return true;
         }
         return false;
+    }
+
+    public void writeLogIn(){
+
     }
 }
