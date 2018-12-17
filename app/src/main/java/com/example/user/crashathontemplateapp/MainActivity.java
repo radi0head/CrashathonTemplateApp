@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
@@ -38,12 +39,13 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, View.OnClickListener {
 
     int count=0;
+    int time=0;
     int countCamera=0;
     int crash1Count=0;
     int crash2Count=0;
     Button crash1=null;
     Button crash2=null;
-    TextView scoreTextView=null;
+    TextView timerTextView=null;
     SharedPreferences sharedPref;
 
     @Override
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity
                 button.setText(getString(R.string.crash));
                 crash2Count--;
             }
-        }else if(id==R.id.score_text){
+        }else if(id==R.id.timer_text){
             //We begin by checking if the feature has been locked previously
             sharedPref=this.getPreferences(Context.MODE_PRIVATE);
             String isLocked=sharedPref.getString(getString(R.string.score_text_lock),"false");
@@ -91,6 +93,9 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
+        //set the starting time
+        time=readTime();
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -141,9 +146,22 @@ public class MainActivity extends AppCompatActivity
             count=readScore();
         }
 
-        scoreTextView=(TextView)findViewById(R.id.score_text);
-        scoreTextView.setOnClickListener(this);
-        scoreTextView.setText("Score: "+count);
+        timerTextView=(TextView)findViewById(R.id.timer_text);
+        timerTextView.setOnClickListener(this);
+
+        //set the timer for the game by reading the shared preferences
+
+        new CountDownTimer(time*1000, 1000) {
+
+            public void onTick(long millisUntilFinished) {
+                timerTextView.setText("" + millisUntilFinished / 1000);
+            }
+
+            public void onFinish() {
+                Intent intent=new Intent(MainActivity.this, ScoreActivity.class);
+                startActivity(intent);
+            }
+        }.start();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(MainActivity.this);
@@ -155,7 +173,7 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-            super.onBackPressed();
+
         }
     }
 
@@ -325,7 +343,24 @@ public class MainActivity extends AppCompatActivity
     public void crash(){
         count++;
         updateScore(count);
+        writeTime();
         throw new RuntimeException("crash");
+    }
+
+    public int readTime(){
+        String timeText=null;
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+        timeText=sharedPref.getString(getString(R.string.timer_text_key),""+60);
+        return Integer.parseInt(timeText);
+    }
+
+    public void writeTime(){
+        int time=0;
+        time=Integer.parseInt(timerTextView.getText().toString());
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor=sharedPref.edit();
+        editor.putString(getString(R.string.timer_text_key), ""+time);
+        editor.apply();
     }
 
     public void onLogoClick(View v){

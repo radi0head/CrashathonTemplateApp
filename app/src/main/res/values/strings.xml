@@ -15,4 +15,8 @@
     <string name="camera_lock">camera_lock</string>
     <string name="menu_item_lock">menu_item_lock</string>
     <string name="score_text_lock">score_text_lock</string>
+    <string name="login_text">Please enter your details</string>
+    <string name="name_prompt">Enter your name</string>
+    <string name="enter_password">Enter password</string>
+    <string name="timer_text_key">timer_text_key</string>
 </resources>

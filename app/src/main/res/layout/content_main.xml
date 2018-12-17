@@ -13,10 +13,13 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:id="@+id/score_text"
+        android:id="@+id/timer_text"
         android:layout_above="@id/crash1"
+        android:textColor="@android:color/black"
+        android:textSize="36sp"
         tools:text="hello"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:layout_margin="16dp"/>
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
