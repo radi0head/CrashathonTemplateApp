@@ -378,4 +378,10 @@ public class MainActivity extends AppCompatActivity
             crash();
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        writeTime();
+        super.onDestroy();
+    }
 }
