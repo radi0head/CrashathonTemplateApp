@@ -112,7 +112,13 @@ public class MainActivity extends AppCompatActivity
                 getString(R.string.feature_lock),
                 Context.MODE_PRIVATE
         );
-
+        //Check to see if the game has already ended
+        //if yes, then proceed to ScoreActivity autmotically, if no, then stay
+        String isGameOver=sharedPref.getString(getString(R.string.game_over_key),"false");
+        if(isGameOver.equals("true")){
+            Intent intent=new Intent(this, ScoreActivity.class);
+            startActivity(intent);
+        }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -158,6 +164,10 @@ public class MainActivity extends AppCompatActivity
             }
 
             public void onFinish() {
+                //set the game_over sharedpref value as true and direct to the ScoreActivity
+                SharedPreferences.Editor editor=sharedPref.edit();
+                editor.putString(getString(R.string.game_over_key),"true");
+                editor.apply();
                 Intent intent=new Intent(MainActivity.this, ScoreActivity.class);
                 startActivity(intent);
             }
@@ -381,7 +391,17 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        writeTime();
         super.onDestroy();
+    }
+
+    @Override
+    protected void onStop() {
+        String isGameOver=sharedPref.getString(getString(R.string.game_over_key),"false");
+        if(isGameOver.equals("true")){
+            super.onStop();
+        }else{
+            writeTime();
+            super.onStop();
+        }
     }
 }

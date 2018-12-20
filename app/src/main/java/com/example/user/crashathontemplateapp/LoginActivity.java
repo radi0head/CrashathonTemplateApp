@@ -26,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     Button proceed=null;
     String userInfo=null;
     SharedPreferences sharedPref=null;
-    String password="ccisthebest";
+    String password="1234";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,17 +35,12 @@ public class LoginActivity extends AppCompatActivity {
 
         sharedPref=this.getPreferences(Context.MODE_PRIVATE);
         String isLoggedIn=sharedPref.getString(getString(R.string.log_in_key),"false");
-        if(isLoggedIn.equals("false")){
-            SharedPreferences.Editor editor=sharedPref.edit();
-            editor.putString(getString(R.string.log_in_key),"true");
-            editor.apply();
-        }else if(isLoggedIn.equals("true")){
+        if(isLoggedIn.equals("true")){
             Intent intent=new Intent(this, MainActivity.class);
             startActivity(intent);
         }
 
         proceed=(Button)findViewById(R.id.enter_game_button);
-
         proceed.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -56,6 +51,11 @@ public class LoginActivity extends AppCompatActivity {
                 passwordByUser=passwordField.getText().toString();
                 if(passwordByUser.equals(password)){
                     writeName(userInfo);
+                    //set the logged in sharedpref as true
+                    SharedPreferences.Editor editor=sharedPref.edit();
+                    editor.putString(getString(R.string.log_in_key),"true");
+                    editor.apply();
+                    //take the user to the MainActivity
                     Intent intent=new Intent(LoginActivity.this, MainActivity.class);
                     startActivity(intent);
                 }else{
@@ -108,9 +108,5 @@ public class LoginActivity extends AppCompatActivity {
             return true;
         }
         return false;
-    }
-
-    public void writeLogIn(){
-
     }
 }
