@@ -72,14 +72,14 @@ public class MainActivity extends AppCompatActivity
         }else if(id==R.id.timer_text){
             //We begin by checking if the feature has been locked previously
             sharedPref=this.getPreferences(Context.MODE_PRIVATE);
-            String isLocked=sharedPref.getString(getString(R.string.score_text_lock),"false");
-            if(isLocked.equals("true")){
+            Boolean isLocked=sharedPref.getBoolean(getString(R.string.score_text_lock),false);
+            if(isLocked){
                 Snackbar.make(v, "You've already used this feature", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }else{
                 //First, lock the feature so that it can't be used more than once
                 SharedPreferences.Editor editor=sharedPref.edit();
-                editor.putString(getString(R.string.score_text_lock), "true");
+                editor.putBoolean(getString(R.string.score_text_lock), true);
                 editor.apply();
                 //Then, we crash the app
                 crash();
@@ -108,14 +108,11 @@ public class MainActivity extends AppCompatActivity
         });
 
         //Get a handle to a sharedpref object
-        sharedPref=this.getSharedPreferences(
-                getString(R.string.feature_lock),
-                Context.MODE_PRIVATE
-        );
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
         //Check to see if the game has already ended
         //if yes, then proceed to ScoreActivity autmotically, if no, then stay
-        String isGameOver=sharedPref.getString(getString(R.string.game_over_key),"false");
-        if(isGameOver.equals("true")){
+        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
+        if(isGameOver){
             Intent intent=new Intent(this, ScoreActivity.class);
             startActivity(intent);
         }
@@ -166,7 +163,7 @@ public class MainActivity extends AppCompatActivity
             public void onFinish() {
                 //set the game_over sharedpref value as true and direct to the ScoreActivity
                 SharedPreferences.Editor editor=sharedPref.edit();
-                editor.putString(getString(R.string.game_over_key),"true");
+                editor.putBoolean(getString(R.string.game_over_key),true);
                 editor.apply();
                 Intent intent=new Intent(MainActivity.this, ScoreActivity.class);
                 startActivity(intent);
@@ -204,13 +201,13 @@ public class MainActivity extends AppCompatActivity
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             sharedPref=this.getPreferences(Context.MODE_PRIVATE);
-            String isLocked=sharedPref.getString(getString(R.string.menu_item_lock),"false");
-            if(isLocked.equals("true")){
+            Boolean isLocked=sharedPref.getBoolean(getString(R.string.menu_item_lock),false);
+            if(isLocked){
                 Toast.makeText(this, "You've already used this feature", Toast.LENGTH_SHORT).show();
             }else{
                 //First, lock the feature so that it can't be used more than once
                 SharedPreferences.Editor editor=sharedPref.edit();
-                editor.putString(getString(R.string.menu_item_lock), "true");
+                editor.putBoolean(getString(R.string.menu_item_lock), true);
                 editor.apply();
                 //Then, we crash the app
                 crash();
@@ -233,13 +230,13 @@ public class MainActivity extends AppCompatActivity
                 startActivity(cameraIntent);
             }else{
                 sharedPref=this.getPreferences(Context.MODE_PRIVATE);
-                String isLocked=sharedPref.getString(getString(R.string.camera_lock),"false");
-                if(isLocked.equals("true")){
+                Boolean isLocked=sharedPref.getBoolean(getString(R.string.camera_lock),false);
+                if(isLocked){
                     Toast.makeText(this, "You've already used this feature", Toast.LENGTH_SHORT).show();
                 }else{
                     //First, lock the feature so that it can't be used more than once
                     SharedPreferences.Editor editor=sharedPref.edit();
-                    editor.putString(getString(R.string.camera_lock), "true");
+                    editor.putBoolean(getString(R.string.camera_lock), true);
                     editor.apply();
                     //Then, we crash the app
                     crash();
@@ -292,7 +289,6 @@ public class MainActivity extends AppCompatActivity
             } catch (Exception ex) {
             }
         }
-
         return success;
     }
 
@@ -375,14 +371,14 @@ public class MainActivity extends AppCompatActivity
 
     public void onLogoClick(View v){
         sharedPref=this.getPreferences(Context.MODE_PRIVATE);
-        String isLocked=sharedPref.getString(getString(R.string.logo_lock),"false");
-        if(isLocked.equals("true")){
+        Boolean isLocked=sharedPref.getBoolean(getString(R.string.logo_lock),false);
+        if(isLocked){
             Snackbar.make(v, "You've already used this feature", Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show();
         }else{
             //First, lock the feature so that it can't be used more than once
             SharedPreferences.Editor editor=sharedPref.edit();
-            editor.putString(getString(R.string.logo_lock), "true");
+            editor.putBoolean(getString(R.string.logo_lock), true);
             editor.apply();
             //Then, we crash the app
             crash();
@@ -396,8 +392,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     protected void onStop() {
-        String isGameOver=sharedPref.getString(getString(R.string.game_over_key),"false");
-        if(isGameOver.equals("true")){
+        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
+        if(isGameOver){
             super.onStop();
         }else{
             writeTime();

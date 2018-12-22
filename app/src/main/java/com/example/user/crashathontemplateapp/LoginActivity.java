@@ -34,8 +34,8 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         sharedPref=this.getPreferences(Context.MODE_PRIVATE);
-        String isLoggedIn=sharedPref.getString(getString(R.string.log_in_key),"false");
-        if(isLoggedIn.equals("true")){
+        Boolean isLoggedIn=sharedPref.getBoolean(getString(R.string.log_in_key),false);
+        if(isLoggedIn){
             Intent intent=new Intent(this, MainActivity.class);
             startActivity(intent);
         }
@@ -53,7 +53,7 @@ public class LoginActivity extends AppCompatActivity {
                     writeName(userInfo);
                     //set the logged in sharedpref as true
                     SharedPreferences.Editor editor=sharedPref.edit();
-                    editor.putString(getString(R.string.log_in_key),"true");
+                    editor.putBoolean(getString(R.string.log_in_key),true);
                     editor.apply();
                     //take the user to the MainActivity
                     Intent intent=new Intent(LoginActivity.this, MainActivity.class);
