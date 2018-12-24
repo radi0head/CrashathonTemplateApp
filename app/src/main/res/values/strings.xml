@@ -21,4 +21,9 @@
     <string name="timer_text_key">timer_text_key</string>
     <string name="log_in_key">log_in_key</string>
     <string name="game_over_key">game_over_key</string>
+    <string name="interruption_key">interruption_key</string>
+    <string name="system_time">system_time</string>
+    <string name="exit_game_dialog_message">Do you really want to exit the game?</string>
+    <string name="exit_game_yes_button">Yes</string>
+    <string name="exit_game_no_button">No</string>
 </resources>

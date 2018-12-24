@@ -9,6 +9,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Calendar;
 
 
 public class MainActivity extends AppCompatActivity
@@ -47,6 +49,8 @@ public class MainActivity extends AppCompatActivity
     Button crash2=null;
     TextView timerTextView=null;
     SharedPreferences sharedPref;
+    static CountDownTimer countDownTimer;
+    static final String LOG_TAG=MainActivity.class.getSimpleName();
 
     @Override
     public void onClick(View v) {
@@ -94,8 +98,20 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Get a handle to a sharedpref object
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+
         //set the starting time
         time=readTime();
+
+        Boolean gameInterrupted=sharedPref.getBoolean(getString(R.string.interruption_key),false);
+        if(gameInterrupted){
+            SharedPreferences.Editor editor=sharedPref.edit();
+            editor.putBoolean(getString(R.string.interruption_key),false);
+            editor.commit();
+            int currentSystemTime=(int)Calendar.getInstance().getTime().getTime();
+            time-=(currentSystemTime-sharedPref.getInt(getString(R.string.system_time),currentSystemTime))/1000;
+        }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -107,8 +123,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        //Get a handle to a sharedpref object
-        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
         //Check to see if the game has already ended
         //if yes, then proceed to ScoreActivity autmotically, if no, then stay
         Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
@@ -154,7 +168,7 @@ public class MainActivity extends AppCompatActivity
 
         //set the timer for the game by reading the shared preferences
 
-        new CountDownTimer(time*1000, 1000) {
+        countDownTimer=new CountDownTimer(time*1000, 1000) {
 
             public void onTick(long millisUntilFinished) {
                 timerTextView.setText("" + millisUntilFinished / 1000);
@@ -180,7 +194,7 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-
+            new ExitGameDialogFragment().show(getSupportFragmentManager(),LOG_TAG);
         }
     }
 
@@ -386,18 +400,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-    }
-
-    @Override
     protected void onStop() {
         Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
-        if(isGameOver){
-            super.onStop();
-        }else{
+        if(!isGameOver) {
             writeTime();
-            super.onStop();
         }
+        SharedPreferences.Editor editor=sharedPref.edit();
+        editor.putBoolean(getString(R.string.interruption_key),true);
+        editor.putInt(getString(R.string.system_time), (int)Calendar.getInstance().getTime().getTime());
+        editor.commit();
+        super.onStop();
     }
 }
