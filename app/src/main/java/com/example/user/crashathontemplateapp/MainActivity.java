@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity
     Button crash2=null;
     TextView timerTextView=null;
     SharedPreferences sharedPref;
+    CountDownTimer countDownTimer=null;
+    Boolean isGameOver;
 
     @Override
     public void onClick(View v) {
@@ -111,7 +113,7 @@ public class MainActivity extends AppCompatActivity
         sharedPref=this.getPreferences(Context.MODE_PRIVATE);
         //Check to see if the game has already ended
         //if yes, then proceed to ScoreActivity autmotically, if no, then stay
-        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
+        isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
         if(isGameOver){
             Intent intent=new Intent(this, ScoreActivity.class);
             startActivity(intent);
@@ -154,7 +156,7 @@ public class MainActivity extends AppCompatActivity
 
         //set the timer for the game by reading the shared preferences
 
-        new CountDownTimer(time*1000, 1000) {
+        countDownTimer=new CountDownTimer(time*1000, 1000) {
 
             public void onTick(long millisUntilFinished) {
                 timerTextView.setText("" + millisUntilFinished / 1000);
@@ -292,6 +294,8 @@ public class MainActivity extends AppCompatActivity
         return success;
     }
 
+
+
     public int readScore(){
 
         int score=0;
@@ -350,6 +354,7 @@ public class MainActivity extends AppCompatActivity
         count++;
         updateScore(count);
         writeTime();
+        Toast.makeText(this, "CRASH!", Toast.LENGTH_SHORT).show();
         throw new RuntimeException("crash");
     }
 
@@ -386,18 +391,25 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onPause() {
+        if(!isGameOver){
+            Toast.makeText(this, "WARNING: You'll be kicked out of game", Toast.LENGTH_SHORT).show();
+        }
+        super.onPause();
     }
 
     @Override
     protected void onStop() {
-        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
-        if(isGameOver){
-            super.onStop();
-        }else{
-            writeTime();
-            super.onStop();
-        }
+//        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
+//        if(isGameOver){
+//            super.onStop();
+//        }else{
+//            writeTime();
+//            super.onStop();
+//        }
+        //we no longer need to save the timer state
+        //instead we stop the timer and declare that the game is over
+        countDownTimer.onFinish();
+        super.onStop();
     }
 }
