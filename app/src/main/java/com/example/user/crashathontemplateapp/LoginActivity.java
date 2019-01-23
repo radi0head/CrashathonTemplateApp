@@ -50,7 +50,7 @@ public class LoginActivity extends AppCompatActivity {
                 passwordField=(EditText)findViewById(R.id.password_field);
                 passwordByUser=passwordField.getText().toString();
                 if(passwordByUser.equals(password)){
-                    writeName(userInfo);
+                    Utils.writeName(userInfo, LoginActivity.this);
                     //set the logged in sharedpref as true
                     SharedPreferences.Editor editor=sharedPref.edit();
                     editor.putBoolean(getString(R.string.log_in_key),true);
@@ -63,50 +63,5 @@ public class LoginActivity extends AppCompatActivity {
                 }
             }
         });
-    }
-
-    private void writeName(String name){
-        // check if available and not read only
-        if (!isExternalStorageAvailable() || isExternalStorageReadOnly()) {
-            Log.w("FileUtils", "Storage not available or read only");
-        }
-
-        // Create a path where we will place our List of objects on external storage
-        File file = new File(LoginActivity.this.getExternalFilesDir(null), "UserData");
-        PrintStream p = null; // declare a print stream object
-
-        try {
-            OutputStream os = new FileOutputStream(file);
-            // Connect print stream to the output stream
-            p = new PrintStream(os);
-            p.println(name);
-            Log.w("FileUtils", "Writing file" + file);
-        } catch (IOException e) {
-            Log.w("FileUtils", "Error writing " + file, e);
-        } catch (Exception e) {
-            Log.w("FileUtils", "Failed to save file", e);
-        } finally {
-            try {
-                if (null != p)
-                    p.close();
-            } catch (Exception ex) {
-            }
-        }
-    }
-
-    private static boolean isExternalStorageReadOnly() {
-        String extStorageState = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean isExternalStorageAvailable() {
-        String extStorageState = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
-            return true;
-        }
-        return false;
     }
 }

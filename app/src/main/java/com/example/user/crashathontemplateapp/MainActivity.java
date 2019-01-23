@@ -7,8 +7,10 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.DialogFragment;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -23,6 +25,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.io.BufferedReader;
 import java.io.DataInputStream;
 import java.io.File;
@@ -33,6 +40,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MainActivity extends AppCompatActivity
@@ -47,8 +57,9 @@ public class MainActivity extends AppCompatActivity
     Button crash2=null;
     TextView timerTextView=null;
     SharedPreferences sharedPref;
-    CountDownTimer countDownTimer=null;
-    Boolean isGameOver;
+    static CountDownTimer countDownTimer;
+    static final String LOG_TAG=MainActivity.class.getSimpleName();
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     @Override
     public void onClick(View v) {
@@ -96,8 +107,20 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //Get a handle to a sharedpref object
+        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
+
         //set the starting time
         time=readTime();
+
+        Boolean gameInterrupted=sharedPref.getBoolean(getString(R.string.interruption_key),false);
+        if(gameInterrupted){
+            SharedPreferences.Editor editor=sharedPref.edit();
+            editor.putBoolean(getString(R.string.interruption_key),false);
+            editor.commit();
+            int currentSystemTime=(int)Calendar.getInstance().getTime().getTime();
+            time-=(currentSystemTime-sharedPref.getInt(getString(R.string.system_time),currentSystemTime))/1000;
+        }
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -109,11 +132,9 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        //Get a handle to a sharedpref object
-        sharedPref=this.getPreferences(Context.MODE_PRIVATE);
         //Check to see if the game has already ended
         //if yes, then proceed to ScoreActivity autmotically, if no, then stay
-        isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
+        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
         if(isGameOver){
             Intent intent=new Intent(this, ScoreActivity.class);
             startActivity(intent);
@@ -146,9 +167,9 @@ public class MainActivity extends AppCompatActivity
         }
 
         if(scoreString.isEmpty()){
-            updateScore(count);
+            Utils.updateScore(count, this);
         }else{
-            count=readScore();
+            count=Utils.readScore(this);
         }
 
         timerTextView=(TextView)findViewById(R.id.timer_text);
@@ -167,6 +188,26 @@ public class MainActivity extends AppCompatActivity
                 SharedPreferences.Editor editor=sharedPref.edit();
                 editor.putBoolean(getString(R.string.game_over_key),true);
                 editor.apply();
+
+                //add user details to firestore
+                Map<String, Object> user = new HashMap<>();
+                user.put("name", Utils.readName(MainActivity.this));
+                user.put("score", count);
+                db.collection("users")
+                        .add(user)
+                        .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                            @Override
+                            public void onSuccess(DocumentReference documentReference) {
+                                Log.d(LOG_TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.w(LOG_TAG, "Error adding document", e);
+                            }
+                        });
+
                 Intent intent=new Intent(MainActivity.this, ScoreActivity.class);
                 startActivity(intent);
             }
@@ -182,7 +223,7 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
-
+            new ExitGameDialogFragment().show(getSupportFragmentManager(),LOG_TAG);
         }
     }
 
@@ -261,100 +302,10 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    public boolean updateScore(int count){
-        // check if available and not read only
-        if (!isExternalStorageAvailable() || isExternalStorageReadOnly()) {
-            Log.w("FileUtils", "Storage not available or read only");
-            return false;
-        }
-
-        // Create a path where we will place our List of objects on external storage
-        File file = new File(this.getExternalFilesDir(null), "ScoreData");
-        PrintStream p = null; // declare a print stream object
-        boolean success = false;
-
-        try {
-            OutputStream os = new FileOutputStream(file);
-            // Connect print stream to the output stream
-            p = new PrintStream(os);
-            p.println(""+count);
-            Log.w("FileUtils", "Writing file" + file);
-            success = true;
-        } catch (IOException e) {
-            Log.w("FileUtils", "Error writing " + file, e);
-        } catch (Exception e) {
-            Log.w("FileUtils", "Failed to save file", e);
-        } finally {
-            try {
-                if (null != p)
-                    p.close();
-            } catch (Exception ex) {
-            }
-        }
-        return success;
-    }
-
-
-
-    public int readScore(){
-
-        int score=0;
-
-        if (!isExternalStorageAvailable() || isExternalStorageReadOnly())
-        {
-            Log.w("FileUtils", "Storage not available or read only");
-            return 13;
-        }
-
-        FileInputStream fis = null;
-
-        try
-        {
-            File file = new File(this.getExternalFilesDir(null), "ScoreData");
-            fis = new FileInputStream(file);
-            // Get the object of DataInputStream
-            DataInputStream in = new DataInputStream(fis);
-            BufferedReader br = new BufferedReader(new InputStreamReader(in));
-            String strLine;
-            //Read File Line By Line
-            while ((strLine = br.readLine()) != null) {
-                Log.w("FileUtils", "File data: " + strLine);
-                score=Integer.parseInt(""+strLine);
-            }
-            in.close();
-        }
-        catch (Exception ex) {
-            Log.e("FileUtils", "failed to load file", ex);
-        }
-        finally {
-            try {if (null != fis) fis.close();} catch (IOException ex) {}
-        }
-
-        return score;
-
-    }
-
-    private static boolean isExternalStorageReadOnly() {
-        String extStorageState = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(extStorageState)) {
-            return true;
-        }
-        return false;
-    }
-
-    private static boolean isExternalStorageAvailable() {
-        String extStorageState = Environment.getExternalStorageState();
-        if (Environment.MEDIA_MOUNTED.equals(extStorageState)) {
-            return true;
-        }
-        return false;
-    }
-
     public void crash(){
         count++;
-        updateScore(count);
+        Utils.updateScore(count, MainActivity.this);
         writeTime();
-        Toast.makeText(this, "CRASH!", Toast.LENGTH_SHORT).show();
         throw new RuntimeException("crash");
     }
 
@@ -391,25 +342,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    protected void onPause() {
-        if(!isGameOver){
-            Toast.makeText(this, "WARNING: You'll be kicked out of game", Toast.LENGTH_SHORT).show();
-        }
-        super.onPause();
-    }
-
-    @Override
     protected void onStop() {
-//        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
-//        if(isGameOver){
-//            super.onStop();
-//        }else{
-//            writeTime();
-//            super.onStop();
-//        }
-        //we no longer need to save the timer state
-        //instead we stop the timer and declare that the game is over
-        countDownTimer.onFinish();
+        Boolean isGameOver=sharedPref.getBoolean(getString(R.string.game_over_key),false);
+        if(!isGameOver) {
+            writeTime();
+        }
+        SharedPreferences.Editor editor=sharedPref.edit();
+        editor.putBoolean(getString(R.string.interruption_key),true);
+        editor.putInt(getString(R.string.system_time), (int)Calendar.getInstance().getTime().getTime());
+        editor.commit();
         super.onStop();
     }
 }
